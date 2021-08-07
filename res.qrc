@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/asset">
+        <file>money-copper.gif</file>
+        <file>money-gold.gif</file>
+        <file>money-silver.gif</file>
+        <file>socket-blue.gif</file>
+        <file>socket-prismatic.gif</file>
+        <file>socket-red.gif</file>
+        <file>socket-yellow.gif</file>
+        <file>tooltip.png</file>
+    </qresource>
+</RCC>
