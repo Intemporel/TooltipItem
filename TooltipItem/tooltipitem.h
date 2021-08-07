@@ -12,9 +12,11 @@ enum TOOLTIP_POSITION {
     BONDING,
     UNIQUE_FLAG,
     SUBCLASS,
-    DAMAGE,
+    PLAYER_CLASS,
+    DAMAGE_OR_ARMOR,
     DPS,
     STAT_UP,
+    RESISTANCE,
     SOCKET,
     SOCKET_BONUS,
     DURABILITY,
@@ -62,7 +64,7 @@ enum MONEY_TYPE {
 
 enum CLASS {
     CONSUMABLE,
-    CONTAINER,
+    CONTAINER, // done
     WEAPON,
     GEM,
     ARMOR,
@@ -303,6 +305,31 @@ enum STAT_TYPE {
     ITEM_MOD_BLOCK_VALUE
 };
 
+enum RES_TYPE {
+    RES_HOLY,
+    RES_FIRE,
+    RES_NATURE,
+    RES_FROST,
+    RES_SHADOW,
+    RES_ARCANE
+};
+
+// add player_class enum
+enum PLAYER_CLASS {
+    NONE_0,
+    CLASS_WARRIOR,
+    CLASS_PALADIN,
+    CLASS_HUNTER,
+    CLASS_ROGUE,
+    CLASS_PRIEST,
+    CLASS_DEATH_KNIGHT,
+    CLASS_SHAMAN,
+    CLASS_MAGE,
+    CLASS_WARLOCK,
+    NONE_10,
+    CLASS_DRUID
+};
+
 class TooltipItem : public QGraphicsScene {
 public:
     TooltipItem();
@@ -317,9 +344,11 @@ public:
     void setHeroicFlag(bool);
     void setBonding(int);
     void setUniqueFlag(bool);
-    void setClassAndSubclassAndSlot(int,int,int);
+    void setClassSubclassAndSlot(int,int,int);
     void setDamage(int, int, qreal);
+    void setArmor(int);
     void setStat(QVector<int>, QVector<int>);
+    void setRes(QVector<int>);
     void setSocket(QVector<int>);
     void setDurability(int);
     void setLevelRequired(int);
@@ -332,15 +361,17 @@ public:
     QString resizeTextWithName(QString);
 
 private:
-    bool list_data [17] = {
+    bool list_data [19] = {
         false, //name
         false, //heroic_flag
         false, //bonding
         false, //unique_flag
         false, //subclass
-        false, //damage
+        false, //player class
+        false, //damage or armor
         false, //dps
         false, //stat [0,7]
+        false, //resistance
         false, //socket
         false, //socket_bonus
         false, //durability
@@ -352,15 +383,17 @@ private:
         false  //speed
     };
 
-    QString str_data [17] = {
+    QString str_data [19] = {
         "", //name
-        "Heroic", //heroic_flag
+        "Héroïque", //heroic_flag
         "", //bonding
         "Unique", //unique_flag
         "", //subclass
-        "", //damage
+        "", //player class
+        "", //damage or armor
         "", //dps
         "", //stat [0,7]
+        "", //resistance
         "", //socket
         "", //socket_bonus
         "", //durability
@@ -372,15 +405,17 @@ private:
         ""  //speed
     };
 
-    int clr_data [17] = {
+    int clr_data [19] = {
         COMMUN, //name
         UNCOMMUN, //heroic_flag
         COMMUN, //bonding
         COMMUN, //unique_flag
         COMMUN, //subclass
-        COMMUN, //damage
+        COMMUN, //player class
+        COMMUN, //damage or armor
         COMMUN, //dps
         COMMUN, //stat [0,7]
+        COMMUN, //resistance
         POOR, //socket
         POOR, //socket_bonus
         COMMUN, //durability
@@ -392,15 +427,17 @@ private:
         COMMUN  //speed
     };
 
-    int size_str_data [17] = {
+    int size_str_data [19] = {
         13, //name
         12, //heroic_flag
         12, //bonding
         12, //unique_flag
         12, //subclass
-        12, //damage
+        12, //player class
+        12, //damage or armor
         12, //dps
         12, //stat [0,7]
+        12, //resistance
         12, //socket
         12, //socket_bonus
         12, //durability
@@ -415,6 +452,7 @@ private:
     QVector<int> STAT_TYPE;
     QVector<int> STAT_VALUE;
     QVector<int> SOCKET_LIST;
+    QVector<int> RES_VALUE;
 
     QVector<QVector<QString>> STR_SUBCLASS = {
         {"","","","","","","","",""}, // CONSUMABLE
@@ -430,47 +468,47 @@ private:
             "Sac de calligraphe %1 emplacements"
         },
         { // WEAPON
-            "One handed",
-            "Two handed",
+            "A une main",
+            "Deux mains",
             "A distance",
             "A distance",
-            "One handed",
-            "Two handed",
-            "Two handed",
-            "One handed",
-            "Two handed",
+            "A une main",
+            "Deux mains",
+            "Deux mains",
+            "A une main",
+            "Deux mains",
             "",
-            "Two handed",
+            "Deux mains",
             "",
             "",
-            "One handed",
-            "Miscellaneous",
-            "One handed",
+            "A une main",
+            "Divers",
+            "A une main",
             "Arme de jet",
             "Arme de jet",
             "A distance",
             "A distance",
-            "Two handed"
+            "Deux mains"
         },
         {"","","","","","","","",""}, // GEM
         { // ARMOR
             "",
-            "Head",
-            "Neck",
-            "Shoulder",
-            "Shirt",
-            "Chest",
-            "Waist",
-            "Legs",
-            "Feet",
-            "Wrists",
-            "Hands",
-            "Finger",
-            "Trinket",
+            "Tête",
+            "Cou",
+            "Epaulière",
+            "Chemise",
+            "Plastron",
+            "Ceinture",
+            "Jambes",
+            "Pieds",
+            "Poignets",
+            "Mains",
+            "Doigt",
+            "Bijou",
             "",
-            "Shield",
+            "Main gauche",
             "",
-            "Back",
+            "Cape",
             "",
             "",
             "",
@@ -495,33 +533,22 @@ private:
         {"",""}, // KEY
         {""}, // PERMANENT
         {"","","","","",""}, // MISCELLANEOUS
-        { // GLYPH
-            "Classe : %",
-            "Classe : %",
-            "Classe : %",
-            "Classe : %",
-            "Classe : %",
-            "Classe : %",
-            "Classe : %",
-            "Classe : %",
-            "Classe : %",
-            "Classe : %"
-        }
+        {"","","","","","","","","","","",""} // GLYPH
     };
 
     QVector<QVector<QString>> STR_SUBCLASS_RIGHT = {
         {"","","","","","","","",""}, // CONSUMABLE
         {"","","","","","","","",""}, // BAG
         { // WEAPON
-            "Axe",
-            "Axe",
+            "Hache",
+            "Hache",
             "Arc",
             "Fusil",
-            "Mace",
-            "Mace",
+            "Masse",
+            "Masse",
             "Arme d'hast",
-            "Sword",
-            "Sword",
+            "Epée",
+            "Epée",
             "",
             "Bâton",
             "",
@@ -537,15 +564,15 @@ private:
         },
         {"","","","","","","","",""}, // GEM
         { // ARMOR
-            "Miscellaneous",
-            "Cloth",
-            "Leather",
-            "Mail",
-            "Plate",
-            "Buckler",
-            "Shield",
+            "Divers",
+            "Armure en tissu",
+            "Armure en cuir",
+            "Armure en maille",
+            "Armure en plaque",
+            "Bouclier",
+            "Bouclier",
             "Libram",
-            "Idol",
+            "Idole",
             "Totem",
             "Sigil"
         },
@@ -560,7 +587,7 @@ private:
         {"",""}, // KEY
         {""}, // PERMANENT
         {"","","","","",""}, // MISCELLANEOUS
-        {"","","","","","","","","",""} // GLYPH
+        {"","","","","","","","","","","",""} // GLYPH
     };
 
     QVector<QString> STR_STAT = {
@@ -600,7 +627,7 @@ private:
         "Equipé : Augmente ITEM_MOD_HIT_TAKEN_RATING +%1",
         "Equipé : Augmente ITEM_MOD_CRIT_TAKEN_RATING +%1",
         "Equipé : Augmente ITEM_MOD_RESILIENCE_RATING +%1",
-        "Equipé : Augmente ITEM_MOD_HASTE_RATING +%1",
+        "Equipé : Augmente votre score de hâte de +%1",
         "Equipé : Augmente ITEM_MOD_EXPERTISE_RATING +%1",
         "Equipé : Augmente la puissance d'attaque de +%1",
         "Equipé : Augmente ITEM_MOD_RANGED_ATTACK_POWER +%1",
@@ -609,10 +636,19 @@ private:
         "Equipé : Augmente ITEM_MOD_SPELL_DAMAGE_DONE +%1",
         "Equipé : Augmente ITEM_MOD_MANA_REGENERATION +%1",
         "Equipé : Augmente ITEM_MOD_ARMOR_PENETRATION_RATING +%1",
-        "Equipé : Augmente ITEM_MOD_SPELL_POWER +%1",
+        "Equipé : Augmente la puissance des sorts de +%1",
         "Equipé : Augmente ITEM_MOD_HEALTH_REGEN +%1",
         "Equipé : Augmente ITEM_MOD_SPELL_PENETRATION +%1",
         "Equipé : Augmente ITEM_MOD_BLOCK_VALUE +%1"
+    };
+
+    const QString STR_RES [6] = {
+        QString("+%1 Résistance au Sacré"),
+        QString("+%1 Résistance au Feu"),
+        QString("+%1 Résistance à la Nature"),
+        QString("+%1 Résistance au Givre"),
+        QString("+%1 Résistance à l'Ombre"),
+        QString("+%1 Résistance aux Arcanes")
     };
 
     const QString STR_SOCKET [4] = {
@@ -620,6 +656,31 @@ private:
         "%1 Châsse rouge",
         "%1 Châsse jaune",
         "%1 Châsse bleu"
+    };
+
+    const QString STR_BOUND [6] = {
+        "",
+        "Lié quand ramassé",
+        "Lié quand équipé",
+        "Bind when used",
+        "Quest_item",
+        "Quest_item1"
+    };
+
+    const QString STR_PLAYER_CLASS_BASE = QString("Classe : %1");
+    const QString STR_PLAYER_CLASS [12] = {
+        "",
+        QString("<span style=\"color:#C69B6D;\">%1</span>").arg("Guerrier"),
+        QString("<span style=\"color:#F48CBA;\">%1</span>").arg("Paladin"),
+        QString("<span style=\"color:#AAD372;\">%1</span>").arg("Chasseur"),
+        QString("<span style=\"color:#FFF468;\">%1</span>").arg("Voleur"),
+        QString("<span style=\"color:#FFFFFF;\">%1</span>").arg("Prêtre"),
+        QString("<span style=\"color:#C41E3B;\">%1</span>").arg("Chevalier de la mort"),
+        QString("<span style=\"color:#2359FF;\">%1</span>").arg("Chaman"),
+        QString("<span style=\"color:#68CCEF;\">%1</span>").arg("Mage"),
+        QString("<span style=\"color:#9382C9;\">%1</span>").arg("Démoniste"),
+        "",
+        QString("<span style=\"color:#FF7C0A;\">%1</span>").arg("Druide")
     };
 
     //CONST
@@ -639,15 +700,6 @@ private:
             "#E5CC80",
             "#E5CC80",
             "#FFD100"
-        };
-        // BOUNDING TYPE
-        const QString BOUND [6] = {
-            "",
-            "Lié quand ramassé",
-            "Lié quand équipé",
-            "Bind when used",
-            "Quest_item",
-            "Quest_item1"
         };
         // ASSET
             //background

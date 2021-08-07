@@ -18,33 +18,47 @@ void TooltipItem::setBonding(int bounding_type){
         return;
 
     list_data[TOOLTIP_POSITION::BONDING] = true;
-    str_data[TOOLTIP_POSITION::BONDING] = BOUND[bounding_type];
+    str_data[TOOLTIP_POSITION::BONDING] = STR_BOUND[bounding_type];
 }
 
 void TooltipItem::setUniqueFlag(bool isUnique){
     list_data[TOOLTIP_POSITION::UNIQUE_FLAG] = isUnique;
 }
 
-void TooltipItem::setClassAndSubclassAndSlot(int _class, int subclass, int slot){
-    if (_class == CLASS::ARMOR)
-        subclass = slot;
+void TooltipItem::setClassSubclassAndSlot(int _class, int subclass, int slot){
 
-    if (STR_SUBCLASS[_class][subclass] == "" and STR_SUBCLASS_RIGHT[_class][subclass] == "")
+    int subclass_data = subclass;
+
+    if (_class == CLASS::ARMOR)
+        subclass_data = slot;
+
+    if (_class == CLASS::GLYPH) {
+        list_data[TOOLTIP_POSITION::PLAYER_CLASS] = true;
+        str_data[TOOLTIP_POSITION::PLAYER_CLASS] = STR_PLAYER_CLASS_BASE.arg(STR_PLAYER_CLASS[subclass]);
+    }
+
+    if (STR_SUBCLASS[_class][subclass_data] == "" and STR_SUBCLASS_RIGHT[_class][subclass_data] == "")
         return;
 
-    if (STR_SUBCLASS[_class][subclass] != "") {
+    if (STR_SUBCLASS[_class][subclass_data] != "") {
         list_data[TOOLTIP_POSITION::SUBCLASS] = true;
 
         if (_class == CLASS::CONTAINER) {
-            str_data[TOOLTIP_POSITION::SUBCLASS] = QString(STR_SUBCLASS[_class][subclass]).arg(slot);
+            if (subclass == SUBCLASS_CONTAINER::CONTAINER_SOUL_BAG) {
+                list_data[TOOLTIP_POSITION::PLAYER_CLASS] = true;
+                str_data[TOOLTIP_POSITION::PLAYER_CLASS] = STR_PLAYER_CLASS_BASE.arg(STR_PLAYER_CLASS[PLAYER_CLASS::CLASS_WARLOCK]);
+            }
+            str_data[TOOLTIP_POSITION::SUBCLASS] = QString(STR_SUBCLASS[_class][subclass_data]).arg(slot);
         } else {
-            str_data[TOOLTIP_POSITION::SUBCLASS] = STR_SUBCLASS[_class][subclass];
+            str_data[TOOLTIP_POSITION::SUBCLASS] = STR_SUBCLASS[_class][subclass_data];
         }
     }
 
     if (STR_SUBCLASS_RIGHT[_class][subclass] != "") {
-        list_data[TOOLTIP_POSITION::SUBCLASS_RIGHT] = true;
-        str_data[TOOLTIP_POSITION::SUBCLASS_RIGHT] = STR_SUBCLASS_RIGHT[_class][subclass];
+        if (slot != 4 and slot != 2 and slot != 11 and slot != 12 and slot != 14 ) {
+            list_data[TOOLTIP_POSITION::SUBCLASS_RIGHT] = true;
+            str_data[TOOLTIP_POSITION::SUBCLASS_RIGHT] = STR_SUBCLASS_RIGHT[_class][subclass];
+        }
     }
 }
 
@@ -55,13 +69,27 @@ void TooltipItem::setDamage(int min, int max, qreal speed){
     if (speed==0)
         return;
 
-    list_data[TOOLTIP_POSITION::DAMAGE] = true;
+    list_data[TOOLTIP_POSITION::DAMAGE_OR_ARMOR] = true;
     list_data[TOOLTIP_POSITION::DPS] = true;
     list_data[TOOLTIP_POSITION::SPEED] = true;
 
-    str_data[TOOLTIP_POSITION::DAMAGE] = QString("Dégâts : %1 - %2").arg(min).arg(max);
+    str_data[TOOLTIP_POSITION::DAMAGE_OR_ARMOR] = QString("Dégâts : %1 - %2").arg(min).arg(max);
     str_data[TOOLTIP_POSITION::DPS] = QString("(%1 dégâts par seconde)").arg(qFloor(((min/speed)+(max/speed))/2));
     str_data[TOOLTIP_POSITION::SPEED] = QString("Vitesse %1").arg(speed);
+}
+
+void TooltipItem::setArmor(int armor){
+    if (armor <= 0)
+        return;
+
+    list_data[TOOLTIP_POSITION::DAMAGE_OR_ARMOR] = true;
+    str_data[TOOLTIP_POSITION::DAMAGE_OR_ARMOR] = QString("Armure : %1").arg(armor);
+
+    if (list_data[TOOLTIP_POSITION::DPS])
+        list_data[TOOLTIP_POSITION::DPS] = false;
+
+    if (list_data[TOOLTIP_POSITION::SPEED])
+        list_data[TOOLTIP_POSITION::SPEED] = false;
 }
 
 void TooltipItem::setStat(QVector<int> stat_type, QVector<int> stat_value){
@@ -88,6 +116,15 @@ void TooltipItem::setStat(QVector<int> stat_type, QVector<int> stat_value){
 
     STAT_TYPE = stat_type;
     STAT_VALUE = stat_value;
+}
+
+void TooltipItem::setRes(QVector<int> resistance){
+
+    if (resistance.length() > RES_TYPE::RES_ARCANE+1)
+        return;
+
+    list_data[TOOLTIP_POSITION::RESISTANCE] = true;
+    RES_VALUE = resistance;
 }
 
 void TooltipItem::setSocket(QVector<int> socketList){
@@ -125,8 +162,19 @@ void TooltipItem::setSellPrice(int amount){
     int silver = qFloor((amount-(gold*qPow(10,4)))/qPow(10,2));
     int copper = ((amount-(gold*qPow(10,4)))-(silver*qPow(10,2)));
 
+    QString money_str = QString("Prix de vente : ");
+
+    if (gold > 0)
+        money_str.push_back(QString("%1%2 ").arg(gold).arg(MONEY[2]));
+
+    if (silver > 0)
+        money_str.push_back(QString("%1%2 ").arg(silver).arg(MONEY[1]));
+
+    if (copper > 0)
+        money_str.push_back(QString("%1%2 ").arg(copper).arg(MONEY[0]));
+
     list_data[TOOLTIP_POSITION::SELL_PRICE] = true;
-    str_data[TOOLTIP_POSITION::SELL_PRICE] = QString("Prix de vente : %1%2 %3%4 %5%6").arg(gold).arg(MONEY[2]).arg(silver).arg(MONEY[1]).arg(copper).arg(MONEY[0]);
+    str_data[TOOLTIP_POSITION::SELL_PRICE] = money_str;
 }
 
 void TooltipItem::drawTooltip(){
@@ -155,11 +203,12 @@ void TooltipItem::drawTooltip(){
     int stat_up_index = 0;
     int stat_down_index = 0;
     int socket_index = 0;
+    int resistance_index = 0;
 
     int index_data = 0;
 
     for (int i=TOOLTIP_POSITION::NAME; i<=TOOLTIP_POSITION::SELL_PRICE; i++){
-        index_data = i + stat_up_index + stat_down_index + socket_index;
+        index_data = i + stat_up_index + stat_down_index + socket_index + resistance_index;
 
         if ( i != TOOLTIP_POSITION::STAT_UP and i != TOOLTIP_POSITION::STAT_DOWN and i != TOOLTIP_POSITION::SOCKET)
             data.push_back(new QGraphicsTextItem());
@@ -171,7 +220,7 @@ void TooltipItem::drawTooltip(){
             if (i == TOOLTIP_POSITION::SUBCLASS)
                 position_subclass = count;
 
-            if (i == TOOLTIP_POSITION::DAMAGE)
+            if (i == TOOLTIP_POSITION::DAMAGE_OR_ARMOR)
                 position_speed = count;
 
             if (i == TOOLTIP_POSITION::STAT_UP or i == TOOLTIP_POSITION::STAT_DOWN) {
@@ -217,6 +266,28 @@ void TooltipItem::drawTooltip(){
                 continue;
             }
 
+            if (i == TOOLTIP_POSITION::RESISTANCE) {
+                resistance_index = -1;
+
+                for (int y=0; y<RES_VALUE.length(); y++) {
+                    data.push_back(new QGraphicsTextItem());
+
+                    if (RES_VALUE[y] > 0) {
+                        data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_stat);
+                        data[index_data+y]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
+                        data[index_data+y]->setFont(QFont(POLICY, size_str_data[i]));
+                        data[index_data+y]->setHtml(STR_RES[y].arg(RES_VALUE[y]));
+                        addItem(data[index_data+y]);
+
+                        count++;
+                    }
+
+                    resistance_index++;
+                }
+
+                continue;
+            }
+
             if (i == TOOLTIP_POSITION::SOCKET) {
                 socket_index = -1;
 
@@ -255,7 +326,7 @@ void TooltipItem::drawTooltip(){
     if (list_data[TOOLTIP_POSITION::SUBCLASS]) {
         data.push_back(new QGraphicsTextItem());
 
-        int new_subclass_right = TOOLTIP_POSITION::SUBCLASS_RIGHT + stat_up_index + stat_down_index + socket_index;
+        int new_subclass_right = TOOLTIP_POSITION::SUBCLASS_RIGHT + stat_up_index + stat_down_index + socket_index + resistance_index;
 
         if (list_data[TOOLTIP_POSITION::SUBCLASS_RIGHT]) {
             QFont F(POLICY, size_str_data[TOOLTIP_POSITION::SUBCLASS_RIGHT]);
@@ -269,10 +340,10 @@ void TooltipItem::drawTooltip(){
         }
     }
 
-    if (list_data[TOOLTIP_POSITION::DAMAGE]) {
+    if (list_data[TOOLTIP_POSITION::DAMAGE_OR_ARMOR]) {
         data.push_back(new QGraphicsTextItem());
 
-        int new_speed = TOOLTIP_POSITION::SPEED + stat_up_index + stat_down_index + socket_index;
+        int new_speed = TOOLTIP_POSITION::SPEED + stat_up_index + stat_down_index + socket_index + resistance_index;
 
         if (list_data[TOOLTIP_POSITION::SPEED]) {
             QFont F(POLICY, size_str_data[TOOLTIP_POSITION::SPEED]);
