@@ -4,8 +4,8 @@
 TooltipItem::TooltipItem(){ }
 
 void TooltipItem::setName(QString name, int quality){
+    str_data[TOOLTIP_POSITION::NAME] = resizeText(name);
     list_data[TOOLTIP_POSITION::NAME] = true;
-    str_data[TOOLTIP_POSITION::NAME] = name;
     clr_data[TOOLTIP_POSITION::NAME] = quality;
 }
 
@@ -153,7 +153,7 @@ void TooltipItem::setLevelRequired(int level){
 
 void TooltipItem::setDescription(QString description){
     list_data[TOOLTIP_POSITION::DESCRIPTION] = true;
-    str_data[TOOLTIP_POSITION::DESCRIPTION] = QString("\"%1\"").arg(resizeTextWithName(description));
+    str_data[TOOLTIP_POSITION::DESCRIPTION] = QString("\"%1\"").arg(resizeText(description));
 }
 
 void TooltipItem::setSellPrice(int amount){
@@ -197,6 +197,7 @@ void TooltipItem::drawTooltip(){
     int position_subclass = 0;
     int position_speed = 0;
 
+    int offset_name = 0;
     int offset_stat = 0;
     int offset_description = 0;
 
@@ -244,10 +245,10 @@ void TooltipItem::drawTooltip(){
                     if (STAT_TYPE[y] >= range[0] and STAT_TYPE[y] <= range[1]) {
                         data.push_back(new QGraphicsTextItem);
 
-                        data[index_data+current_index]->setPos(4, count*OFFSET_SLOT_Y+offset_stat);
+                        data[index_data+current_index]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat);
                         data[index_data+current_index]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
                         data[index_data+current_index]->setFont(QFont(POLICY, size_str_data[i]));
-                        QString st = resizeTextWithName(STR_STAT[STAT_TYPE[y]].arg(STAT_VALUE[y]));
+                        QString st = resizeText(STR_STAT[STAT_TYPE[y]].arg(STAT_VALUE[y]));
                         data[index_data+current_index]->setHtml(st);
                         addItem(data[index_data+current_index]);
 
@@ -273,7 +274,7 @@ void TooltipItem::drawTooltip(){
                     data.push_back(new QGraphicsTextItem());
 
                     if (RES_VALUE[y] > 0) {
-                        data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_stat);
+                        data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat);
                         data[index_data+y]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
                         data[index_data+y]->setFont(QFont(POLICY, size_str_data[i]));
                         data[index_data+y]->setHtml(STR_RES[y].arg(RES_VALUE[y]));
@@ -294,7 +295,7 @@ void TooltipItem::drawTooltip(){
                 for (int y=0; y<SOCKET_LIST.length(); y++) {
                     data.push_back(new QGraphicsTextItem());
 
-                    data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_stat);
+                    data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat);
                     data[index_data+y]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
                     data[index_data+y]->setFont(QFont(POLICY, size_str_data[i]));
                     data[index_data+y]->setHtml(STR_SOCKET[SOCKET_LIST[y]].arg(SOCKET[SOCKET_LIST[y]]));
@@ -313,13 +314,18 @@ void TooltipItem::drawTooltip(){
                 }
             }
 
-                data[index_data]->setPos(4,count*OFFSET_SLOT_Y+offset_stat+offset_description);
+                data[index_data]->setPos(4,count*OFFSET_SLOT_Y+offset_name+offset_stat+offset_description);
                 data[index_data]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
                 data[index_data]->setFont(QFont(POLICY, size_str_data[i]));
                 data[index_data]->setHtml(str_data[i]);
                 addItem(data[index_data]);
 
                 count++;
+
+                if (i == TOOLTIP_POSITION::NAME)
+                    if (str_data[i].count("<br>") > 0)
+                        offset_name = OFFSET_SLOT_Y*str_data[i].count("<br>");
+
         }
     }
 
@@ -332,11 +338,14 @@ void TooltipItem::drawTooltip(){
             QFont F(POLICY, size_str_data[TOOLTIP_POSITION::SUBCLASS_RIGHT]);
             QFontMetrics FM(F);
 
-            data[new_subclass_right]->setPos(width()-FM.horizontalAdvance(str_data[TOOLTIP_POSITION::SUBCLASS_RIGHT])-4,position_subclass*OFFSET_SLOT_Y);
+            data[new_subclass_right]->setPos(width()-FM.horizontalAdvance(str_data[TOOLTIP_POSITION::SUBCLASS_RIGHT])-4,position_subclass*OFFSET_SLOT_Y+offset_name);
             data[new_subclass_right]->setDefaultTextColor(QColor(QUALITY[clr_data[TOOLTIP_POSITION::SUBCLASS_RIGHT]]));
             data[new_subclass_right]->setFont(F);
             data[new_subclass_right]->setHtml(str_data[TOOLTIP_POSITION::SUBCLASS_RIGHT]);
             addItem(data[new_subclass_right]);
+
+            //for checking colliding
+            subclassRightPosition = new_subclass_right;
         }
     }
 
@@ -357,6 +366,7 @@ void TooltipItem::drawTooltip(){
         }
     }
 
+    checkSubclassAndSubclassRightColliding();
     resizeTooltip();
 }
 
@@ -366,15 +376,26 @@ void TooltipItem::resizeTooltip(){
     back->setRect(0,0,width(),height());
 }
 
-QString TooltipItem::resizeTextWithName(QString st){
-    if (not list_data[TOOLTIP_POSITION::NAME])
-        return st;
+QString TooltipItem::resizeText(QString st){
+    int checkWhat = 0;
 
-    if (str_data[TOOLTIP_POSITION::NAME].length() < st.length()) {
-        int mult_size = qFloor(st.length()/str_data[TOOLTIP_POSITION::NAME].length());
+    if (not list_data[TOOLTIP_POSITION::NAME]) checkWhat = st.length();
+    else checkWhat = str_data[TOOLTIP_POSITION::NAME].length();
+
+    // min size 40 char
+    if (list_data[TOOLTIP_POSITION::NAME]) {
+        if (checkWhat < qPow(2,5)+qPow(2,3))
+            checkWhat = qPow(2,5)+qPow(2,3);
+    }
+
+    if (checkWhat > qPow(2,5)+qPow(2,4)+qPow(2,1))
+        checkWhat = qPow(2,5)+qPow(2,4)+qPow(2,1);
+
+    if (checkWhat < st.length()) {
+        int mult_size = qFloor(st.length()/checkWhat);
 
         for (int i=1; i<=mult_size; i++) {
-            int where_to_insert = i*str_data[0].length();
+            int where_to_insert = i*checkWhat;
 
             while (st.at(where_to_insert) != QChar(' ')) {
                 if (where_to_insert < 0)
@@ -388,5 +409,24 @@ QString TooltipItem::resizeTextWithName(QString st){
     }
 
     return st;
+}
+
+//prevent colliding text
+void TooltipItem::checkSubclassAndSubclassRightColliding(){
+    if (not list_data[TOOLTIP_POSITION::SUBCLASS_RIGHT] or not list_data[TOOLTIP_POSITION::SUBCLASS])
+        return;
+
+    QFont FS(POLICY, size_str_data[TOOLTIP_POSITION::SUBCLASS]);
+    QFontMetrics FMS(FS);
+    int SS = FMS.horizontalAdvance(data[TOOLTIP_POSITION::SUBCLASS]->toPlainText());
+
+    QFont FSR(POLICY, size_str_data[TOOLTIP_POSITION::SUBCLASS_RIGHT]);
+    QFontMetrics FMSR(FSR);
+    int SSR = FMSR.horizontalAdvance(data[subclassRightPosition]->toPlainText());
+
+    QPointF PSR = data[subclassRightPosition]->pos();
+
+    if ((SS+SSR) > width())
+        data[subclassRightPosition]->setPos(SS+32, PSR.y());
 }
 

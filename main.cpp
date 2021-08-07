@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
     item = new TooltipItem();
 
-        item->setName("Cuir de morceaux de Fléau cousus", EPIC);
+        item->setName("Jambières enchanté du futur", EPIC);
         item->setHeroicFlag(true);
         item->setBonding(BONDING_TYPE::BIND_WHEN_PICKED_UP);
         item->setClassSubclassAndSlot(ARMOR, SUBCLASS_ARMOR::ARMOR_LEATHER, 7);
@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
                         });
         item->setDurability(90);
         item->setLevelRequired(80);
+        item->setDescription("Ceci est un objet venu du futur généré via le Software Qt... Excellent !");
         item->setSellPrice(132939);
 
 

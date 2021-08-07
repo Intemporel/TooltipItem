@@ -358,7 +358,9 @@ public:
     // GRAPHICS FUNCTIONS
     void drawTooltip();
     void resizeTooltip();
-    QString resizeTextWithName(QString);
+    QString resizeText(QString);
+    void checkSubclassAndSubclassRightColliding();
+        int subclassRightPosition = 0;
 
 private:
     bool list_data [19] = {
@@ -565,10 +567,10 @@ private:
         {"","","","","","","","",""}, // GEM
         { // ARMOR
             "Divers",
-            "Armure en tissu",
-            "Armure en cuir",
-            "Armure en maille",
-            "Armure en plaque",
+            "Armures en tissu",
+            "Armures en cuir",
+            "Armures en mailles",
+            "Armures en plaques",
             "Bouclier",
             "Bouclier",
             "Libram",
