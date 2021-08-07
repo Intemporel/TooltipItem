@@ -1,6 +1,6 @@
 #include <QApplication>
 
-#include <tooltipitem.h>
+#include <TooltipItem/tooltipitem.h>
 
 TooltipItem * item;
 

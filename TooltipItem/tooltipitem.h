@@ -651,21 +651,21 @@ private:
         };
         // ASSET
             //background
-            const QPixmap background = QPixmap(":/asset/tooltip.png");
+            const QPixmap background = QPixmap(":/asset/asset/background/tooltip.png");
             const QString backgroundColor = "#23313f";
 
             //money
             const QString MONEY [3] = {
-                QString("<img src=\":/asset/money-copper.gif\"/>"),
-                QString("<img src=\":/asset/money-silver.gif\"/>"),
-                QString("<img src=\":/asset/money-gold.gif\"/>")
+                QString("<img src=\":/asset/asset/money/money-copper.gif\"/>"),
+                QString("<img src=\":/asset/asset/money/money-silver.gif\"/>"),
+                QString("<img src=\":/asset/asset/money/money-gold.gif\"/>")
             };
             //socket
             const QString SOCKET [4] = {
-                QString("<img src=\":/asset/socket-prismatic.gif\"/>"),
-                QString("<img src=\":/asset/socket-red.gif\"/>"),
-                QString("<img src=\":/asset/socket-yellow.gif\"/>"),
-                QString("<img src=\":/asset/socket-blue.gif\"/>")
+                QString("<img src=\":/asset/asset/socket/socket-prismatic.gif\"/>"),
+                QString("<img src=\":/asset/asset/socket/socket-red.gif\"/>"),
+                QString("<img src=\":/asset/asset/socket/socket-yellow.gif\"/>"),
+                QString("<img src=\":/asset/asset/socket/socket-blue.gif\"/>")
             };
 };
 
