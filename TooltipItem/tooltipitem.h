@@ -6,6 +6,8 @@
 #include <QGraphicsTextItem>
 #include <QGraphicsPixmapItem>
 
+#include "SpellItemEnchantmentReader/spell_item_enchantment_reader.h"
+
 enum TOOLTIP_POSITION {
     NAME,
     HEROIC_FLAG,
@@ -338,6 +340,7 @@ public:
     QGraphicsPixmapItem * tooltip = new QGraphicsPixmapItem();
     QGraphicsRectItem * back = new  QGraphicsRectItem();
     QVector<QGraphicsTextItem *> data;
+    spell_item_enchantment_reader * SocketBonusDBC;
 
     // SET FUNCTIONS
     void setName(QString, int);
@@ -350,6 +353,7 @@ public:
     void setStat(QVector<int>, QVector<int>);
     void setRes(QVector<int>);
     void setSocket(QVector<int>);
+    void setSocketBonus(int);
     void setDurability(int);
     void setLevelRequired(int);
     void setDescription(QString);

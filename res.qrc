@@ -9,4 +9,7 @@
         <file>asset/socket/socket-red.gif</file>
         <file>asset/socket/socket-yellow.gif</file>
     </qresource>
+    <qresource prefix="/binary">
+        <file>dbc/enUS/SpellItemEnchantment.dbc</file>
+    </qresource>
 </RCC>

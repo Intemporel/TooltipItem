@@ -1,7 +1,9 @@
 #include "tooltipitem.h"
 #include <QDebug>
 
-TooltipItem::TooltipItem(){ }
+TooltipItem::TooltipItem(){
+    SocketBonusDBC = new spell_item_enchantment_reader(":/binary/dbc/enUS/SpellItemEnchantment.dbc", SpellItemEnchantmentStructure::LANG_enUS);
+}
 
 void TooltipItem::setName(QString name, int quality){
     str_data[TOOLTIP_POSITION::NAME] = resizeText(name);
@@ -135,6 +137,16 @@ void TooltipItem::setSocket(QVector<int> socketList){
     SOCKET_LIST = socketList;
 }
 
+void TooltipItem::setSocketBonus(int socketBonus) {
+    quint32 buffer = SocketBonusDBC->searchRecordByID(socketBonus);
+
+    if (not buffer)
+        return;
+
+    list_data[TOOLTIP_POSITION::SOCKET_BONUS] = true;
+    str_data[TOOLTIP_POSITION::SOCKET_BONUS] = resizeText(QString("Bonus de châsse : %1").arg(SocketBonusDBC->getText(buffer)));
+}
+
 void TooltipItem::setDurability(int durability){
     if (durability < 0)
         return;
@@ -200,6 +212,7 @@ void TooltipItem::drawTooltip(){
     int offset_name = 0;
     int offset_stat = 0;
     int offset_description = 0;
+    int offset_socket_bonus = 0;
 
     int stat_up_index = 0;
     int stat_down_index = 0;
@@ -245,7 +258,7 @@ void TooltipItem::drawTooltip(){
                     if (STAT_TYPE[y] >= range[0] and STAT_TYPE[y] <= range[1]) {
                         data.push_back(new QGraphicsTextItem);
 
-                        data[index_data+current_index]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat);
+                        data[index_data+current_index]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat+offset_socket_bonus);
                         data[index_data+current_index]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
                         data[index_data+current_index]->setFont(QFont(POLICY, size_str_data[i]));
                         QString st = resizeText(STR_STAT[STAT_TYPE[y]].arg(STAT_VALUE[y]));
@@ -274,7 +287,7 @@ void TooltipItem::drawTooltip(){
                     data.push_back(new QGraphicsTextItem());
 
                     if (RES_VALUE[y] > 0) {
-                        data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat);
+                        data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat+offset_socket_bonus);
                         data[index_data+y]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
                         data[index_data+y]->setFont(QFont(POLICY, size_str_data[i]));
                         data[index_data+y]->setHtml(STR_RES[y].arg(RES_VALUE[y]));
@@ -295,7 +308,7 @@ void TooltipItem::drawTooltip(){
                 for (int y=0; y<SOCKET_LIST.length(); y++) {
                     data.push_back(new QGraphicsTextItem());
 
-                    data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat);
+                    data[index_data+y]->setPos(4, count*OFFSET_SLOT_Y+offset_name+offset_stat+offset_socket_bonus);
                     data[index_data+y]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
                     data[index_data+y]->setFont(QFont(POLICY, size_str_data[i]));
                     data[index_data+y]->setHtml(STR_SOCKET[SOCKET_LIST[y]].arg(SOCKET[SOCKET_LIST[y]]));
@@ -314,7 +327,7 @@ void TooltipItem::drawTooltip(){
                 }
             }
 
-                data[index_data]->setPos(4,count*OFFSET_SLOT_Y+offset_name+offset_stat+offset_description);
+                data[index_data]->setPos(4,count*OFFSET_SLOT_Y+offset_name+offset_stat+offset_description+offset_socket_bonus);
                 data[index_data]->setDefaultTextColor(QColor(QUALITY[clr_data[i]]));
                 data[index_data]->setFont(QFont(POLICY, size_str_data[i]));
                 data[index_data]->setHtml(str_data[i]);
@@ -325,6 +338,10 @@ void TooltipItem::drawTooltip(){
                 if (i == TOOLTIP_POSITION::NAME)
                     if (str_data[i].count("<br>") > 0)
                         offset_name = OFFSET_SLOT_Y*str_data[i].count("<br>");
+
+                if (i == TOOLTIP_POSITION::SOCKET_BONUS)
+                    if (str_data[i].count("<br>") > 0)
+                        offset_socket_bonus = OFFSET_SLOT_Y*str_data[i].count("<br>");
 
         }
     }

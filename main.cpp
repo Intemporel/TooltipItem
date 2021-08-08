@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
         item->setName("Jambières enchanté du futur", EPIC);
         item->setHeroicFlag(true);
         item->setBonding(BONDING_TYPE::BIND_WHEN_PICKED_UP);
-        item->setClassSubclassAndSlot(ARMOR, SUBCLASS_ARMOR::ARMOR_LEATHER, 7);
+        item->setClassSubclassAndSlot(CLASS::WEAPON, SUBCLASS_WEAPON::WEAPON_MISCELLANEOUS_WEAPON, 7);
         item->setArmor(608);
         item->setStat({
                           STAT_TYPE::ITEM_MOD_STAMINA,
@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
                             SOCKET_COLOR::RED,
                             SOCKET_COLOR::YELLOW
                         });
+        item->setSocketBonus(3355);
         item->setDurability(90);
         item->setLevelRequired(80);
         item->setDescription("Ceci est un objet venu du futur généré via le Software Qt... Excellent !");
